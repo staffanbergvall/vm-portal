@@ -1,0 +1,13 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "VM_SUBSCRIPTION_ID": "abc661c5-b0eb-4f72-9c14-cf94e5914de6",
+    "VM_RESOURCE_GROUP": "rg-migrate-hyperv"
+  },
+  "Host": {
+    "CORS": "*",
+    "CORSCredentials": false
+  }
+}

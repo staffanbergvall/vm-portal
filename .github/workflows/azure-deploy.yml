@@ -1,0 +1,69 @@
+name: Deploy VM Portal to Azure
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'vm-portal/**'
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'vm-portal/**'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    name: Build and Deploy VM Portal
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install API dependencies
+        working-directory: vm-portal/api
+        run: npm ci
+
+      - name: Build API
+        working-directory: vm-portal/api
+        run: npm run build
+
+      - name: Install Frontend dependencies
+        working-directory: vm-portal/frontend
+        run: npm ci
+
+      - name: Build Frontend
+        working-directory: vm-portal/frontend
+        run: npm run build
+
+      - name: Deploy to Azure Static Web Apps
+        id: deploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_VMPORTAL }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: 'upload'
+          app_location: 'vm-portal/frontend/dist'
+          api_location: 'vm-portal/api/dist'
+          output_location: ''
+          skip_app_build: true
+          skip_api_build: true
+
+  close-pull-request:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    name: Close Pull Request
+
+    steps:
+      - name: Close Pull Request
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_VMPORTAL }}
+          action: 'close'

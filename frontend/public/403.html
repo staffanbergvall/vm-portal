@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Åtkomst nekad - VM Portal</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', -apple-system, sans-serif;
+      background: #f3f2f1;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      background: white;
+      padding: 48px;
+      border-radius: 4px;
+      box-shadow: 0 3.2px 7.2px rgba(0,0,0,0.13);
+      text-align: center;
+      max-width: 400px;
+    }
+    h1 { color: #d83b01; margin-bottom: 16px; }
+    p { color: #605e5c; margin-bottom: 24px; line-height: 1.6; }
+    a {
+      display: inline-block;
+      background: #0078d4;
+      color: white;
+      padding: 10px 24px;
+      border-radius: 4px;
+      text-decoration: none;
+    }
+    a:hover { background: #005a9e; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Åtkomst nekad</h1>
+    <p>Du har inte behörighet att komma åt VM Portal. Kontakta din administratör om du behöver åtkomst.</p>
+    <a href="/.auth/logout">Logga ut</a>
+  </div>
+</body>
+</html>
