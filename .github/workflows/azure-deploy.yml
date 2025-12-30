@@ -9,6 +9,11 @@ on:
       - master
   workflow_dispatch:
 
+env:
+  AZURE_FUNCTIONAPP_NAME: func-vmportalprod-fg3mvon3
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: 'api'
+  NODE_VERSION: '20.x'
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -21,7 +26,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ env.NODE_VERSION }}
 
       - name: Install API dependencies
         working-directory: api
@@ -39,18 +44,36 @@ jobs:
         working-directory: frontend
         run: npm run build
 
-      - name: Deploy to Azure Static Web Apps
-        id: deploy
+      - name: Deploy Frontend to Azure Static Web Apps
+        id: deploy-swa
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_VMPORTAL }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: 'upload'
           app_location: 'frontend/dist'
-          api_location: 'api/dist'
-          output_location: ''
           skip_app_build: true
           skip_api_build: true
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Prepare Function App package
+        run: |
+          cd api
+          cp package.json dist/
+          cp package-lock.json dist/
+          cp host.json dist/
+          cd dist
+          npm ci --production
+
+      - name: Deploy API to Azure Functions
+        uses: Azure/functions-action@v1
+        with:
+          app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+          package: 'api/dist'
 
   close-pull-request:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
