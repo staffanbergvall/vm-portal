@@ -205,3 +205,93 @@ export async function batchStopVMs(vmNames: string[]): Promise<BatchVMResponse> 
 export function logout(): void {
   window.location.href = '/.auth/logout';
 }
+
+// Schedule types
+export interface ScheduleInfo {
+  name: string;
+  description: string | null;
+  isEnabled: boolean;
+  frequency: string;
+  interval: number | null;
+  startTime: string | null;
+  nextRun: string | null;
+  timeZone: string | null;
+  weekDays: string[] | null;
+}
+
+export interface ListSchedulesResponse {
+  schedules: ScheduleInfo[];
+  count: number;
+  automationAccount: string;
+}
+
+export interface UpdateScheduleResponse {
+  success: boolean;
+  message: string;
+  schedule: {
+    name: string;
+    isEnabled: boolean;
+    nextRun: string | null;
+  };
+}
+
+export interface TriggerRunbookResponse {
+  success: boolean;
+  message: string;
+  jobId: string;
+  status: string;
+}
+
+/**
+ * List all schedules from Azure Automation
+ */
+export async function listSchedules(): Promise<ListSchedulesResponse> {
+  const clientPrincipal = await getClientPrincipalHeader();
+  const headers: HeadersInit = {};
+  if (clientPrincipal) {
+    headers['x-ms-client-principal'] = clientPrincipal;
+  }
+
+  const response = await fetch(`${FUNCTION_APP_URL}/api/schedules`, { headers });
+  return handleResponse<ListSchedulesResponse>(response);
+}
+
+/**
+ * Enable or disable a schedule
+ */
+export async function updateSchedule(scheduleName: string, isEnabled: boolean): Promise<UpdateScheduleResponse> {
+  const clientPrincipal = await getClientPrincipalHeader();
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json'
+  };
+  if (clientPrincipal) {
+    headers['x-ms-client-principal'] = clientPrincipal;
+  }
+
+  const response = await fetch(`${FUNCTION_APP_URL}/api/schedules/${encodeURIComponent(scheduleName)}`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({ isEnabled })
+  });
+  return handleResponse<UpdateScheduleResponse>(response);
+}
+
+/**
+ * Manually trigger a runbook
+ */
+export async function triggerRunbook(runbookName: string, vmNames?: string): Promise<TriggerRunbookResponse> {
+  const clientPrincipal = await getClientPrincipalHeader();
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json'
+  };
+  if (clientPrincipal) {
+    headers['x-ms-client-principal'] = clientPrincipal;
+  }
+
+  const response = await fetch(`${FUNCTION_APP_URL}/api/runbooks/${encodeURIComponent(runbookName)}/run`, {
+    method: 'POST',
+    headers,
+    body: vmNames ? JSON.stringify({ vmNames }) : undefined
+  });
+  return handleResponse<TriggerRunbookResponse>(response);
+}

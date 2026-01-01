@@ -6,3 +6,6 @@ import './StopVM';
 import './RestartVM';
 import './BatchStartVMs';
 import './BatchStopVMs';
+import './ListSchedules';
+import './UpdateSchedule';
+import './TriggerRunbook';

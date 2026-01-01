@@ -14,6 +14,7 @@
   "dependencies": {
     "@azure/functions": "^4.5.0",
     "@azure/arm-compute": "^22.0.0",
+    "@azure/arm-automation": "^10.1.1",
     "@azure/identity": "^4.4.0"
   },
   "devDependencies": {

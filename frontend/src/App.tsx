@@ -1,11 +1,13 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
+import Schedules from './pages/Schedules';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Dashboard />} />
+        <Route path="/schedules" element={<Schedules />} />
         <Route path="/login" element={<LoginRedirect />} />
       </Routes>
     </BrowserRouter>

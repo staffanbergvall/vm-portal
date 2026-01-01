@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { listVMs, getCurrentUser, logout, batchStartVMs, batchStopVMs, type VMInfo, type UserInfo } from '../services/api';
 import { VMList } from '../components/VMList';
 
@@ -126,6 +127,9 @@ export default function Dashboard() {
           <span style={{ fontSize: '14px', color: 'var(--color-gray-600)' }}>
             {runningCount} igång · {stoppedCount} stoppade
           </span>
+          <Link to="/schedules" className="btn btn-outline">
+            ⏰ Scheman
+          </Link>
           <button
             className={`btn ${selectionMode ? 'btn-primary' : 'btn-outline'}`}
             onClick={toggleSelectionMode}
