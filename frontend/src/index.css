@@ -531,3 +531,169 @@ body {
   gap: 12px;
   flex-wrap: wrap;
 }
+
+/* Monitoring page styles */
+.stats-section {
+  margin-bottom: 24px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 20px;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--color-gray-900);
+  margin-bottom: 8px;
+}
+
+.stat-value.running {
+  color: var(--color-success);
+}
+
+.stat-value.stopped {
+  color: var(--color-danger);
+}
+
+.stat-label {
+  font-size: 13px;
+  color: var(--color-gray-600);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.monitoring-section {
+  background: white;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.monitoring-section h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-gray-900);
+  margin-bottom: 16px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.section-header h2 {
+  margin-bottom: 0;
+}
+
+.time-select {
+  padding: 8px 12px;
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius);
+  font-size: 14px;
+  background: white;
+  color: var(--color-gray-900);
+  cursor: pointer;
+}
+
+.time-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+/* Tables */
+.vm-metrics-table,
+.audit-log-table {
+  overflow-x: auto;
+}
+
+.vm-metrics-table table,
+.audit-log-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.vm-metrics-table th,
+.vm-metrics-table td,
+.audit-log-table th,
+.audit-log-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--color-gray-200);
+}
+
+.vm-metrics-table th,
+.audit-log-table th {
+  font-weight: 600;
+  color: var(--color-gray-600);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--color-gray-100);
+}
+
+.vm-metrics-table tbody tr:hover,
+.audit-log-table tbody tr:hover {
+  background: var(--color-gray-100);
+}
+
+.vm-name-cell {
+  font-weight: 500;
+}
+
+.metric-warning {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+.timestamp-cell {
+  white-space: nowrap;
+  font-family: monospace;
+  font-size: 13px;
+  color: var(--color-gray-600);
+}
+
+.operation-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: var(--color-gray-100);
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: monospace;
+}
+
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.status-indicator.success {
+  color: var(--color-success);
+}
+
+.status-indicator.error {
+  color: var(--color-danger);
+}
+
+.empty-row {
+  text-align: center;
+  color: var(--color-gray-600);
+  padding: 32px !important;
+}

@@ -295,3 +295,101 @@ export async function triggerRunbook(runbookName: string, vmNames?: string): Pro
   });
   return handleResponse<TriggerRunbookResponse>(response);
 }
+
+// Monitoring types
+export interface MetricDataPoint {
+  timestamp: string;
+  average: number | null;
+  maximum: number | null;
+  minimum: number | null;
+}
+
+export interface VMMetrics {
+  vmName: string;
+  cpuPercent: MetricDataPoint[];
+  networkIn: MetricDataPoint[];
+  networkOut: MetricDataPoint[];
+  diskReadBytes: MetricDataPoint[];
+  diskWriteBytes: MetricDataPoint[];
+}
+
+export interface VMMetricsResponse {
+  metrics: VMMetrics;
+  timespan: string;
+  interval: string;
+}
+
+export interface VMSummary {
+  name: string;
+  powerState: string;
+  cpuPercent: number | null;
+  networkInMB: number | null;
+  networkOutMB: number | null;
+}
+
+export interface VMsSummaryResponse {
+  vms: VMSummary[];
+  totalRunning: number;
+  totalStopped: number;
+  avgCpu: number | null;
+  timestamp: string;
+}
+
+export interface AuditLogEntry {
+  timestamp: string;
+  operation: string;
+  vmName: string | null;
+  user: string | null;
+  status: string;
+  message: string | null;
+  duration: number | null;
+}
+
+export interface AuditLogResponse {
+  entries: AuditLogEntry[];
+  count: number;
+  hours: number;
+  limit: number;
+}
+
+/**
+ * Get metrics for a specific VM
+ */
+export async function getVMMetrics(vmName: string, timespan: string = 'PT1H'): Promise<VMMetricsResponse> {
+  const clientPrincipal = await getClientPrincipalHeader();
+  const headers: HeadersInit = {};
+  if (clientPrincipal) {
+    headers['x-ms-client-principal'] = clientPrincipal;
+  }
+
+  const response = await fetch(`${FUNCTION_APP_URL}/api/vms/${encodeURIComponent(vmName)}/metrics?timespan=${timespan}`, { headers });
+  return handleResponse<VMMetricsResponse>(response);
+}
+
+/**
+ * Get summary metrics for all VMs
+ */
+export async function getVMsSummary(): Promise<VMsSummaryResponse> {
+  const clientPrincipal = await getClientPrincipalHeader();
+  const headers: HeadersInit = {};
+  if (clientPrincipal) {
+    headers['x-ms-client-principal'] = clientPrincipal;
+  }
+
+  const response = await fetch(`${FUNCTION_APP_URL}/api/vms/summary`, { headers });
+  return handleResponse<VMsSummaryResponse>(response);
+}
+
+/**
+ * Get audit log entries
+ */
+export async function getAuditLog(hours: number = 24, limit: number = 100): Promise<AuditLogResponse> {
+  const clientPrincipal = await getClientPrincipalHeader();
+  const headers: HeadersInit = {};
+  if (clientPrincipal) {
+    headers['x-ms-client-principal'] = clientPrincipal;
+  }
+
+  const response = await fetch(`${FUNCTION_APP_URL}/api/audit-log?hours=${hours}&limit=${limit}`, { headers });
+  return handleResponse<AuditLogResponse>(response);
+}

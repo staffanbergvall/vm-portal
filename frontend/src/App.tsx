@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Schedules from './pages/Schedules';
+import Monitoring from './pages/Monitoring';
 
 function App() {
   return (
@@ -8,6 +9,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/schedules" element={<Schedules />} />
+        <Route path="/monitoring" element={<Monitoring />} />
         <Route path="/login" element={<LoginRedirect />} />
       </Routes>
     </BrowserRouter>

@@ -9,3 +9,6 @@ import './BatchStopVMs';
 import './ListSchedules';
 import './UpdateSchedule';
 import './TriggerRunbook';
+import './GetVMMetrics';
+import './GetVMsSummary';
+import './GetAuditLog';
