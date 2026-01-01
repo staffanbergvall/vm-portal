@@ -105,6 +105,20 @@ body {
   background: #a12d01;
 }
 
+.btn-warning {
+  background: var(--color-warning);
+  color: #1a1a1a;
+}
+
+.btn-warning:hover {
+  background: #d69e00;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .btn-outline {
   background: transparent;
   border: 1px solid var(--color-gray-300);
@@ -276,4 +290,102 @@ body {
 
 .refresh-btn {
   margin-left: auto;
+}
+
+/* Batch toolbar */
+.batch-toolbar {
+  background: white;
+  padding: 12px 24px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.batch-toolbar-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--color-gray-600);
+}
+
+.batch-toolbar-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.batch-message {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--color-gray-100);
+  border-radius: var(--radius);
+  font-size: 14px;
+  color: var(--color-gray-600);
+}
+
+.btn-link {
+  background: transparent;
+  border: none;
+  color: var(--color-primary);
+  padding: 4px 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.btn-link:hover {
+  text-decoration: underline;
+}
+
+/* VM Card checkbox */
+.vm-checkbox {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  margin-right: 8px;
+}
+
+.vm-checkbox input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.vm-checkbox-mark {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--color-gray-300);
+  border-radius: 3px;
+  background: white;
+  transition: all 0.15s ease;
+}
+
+.vm-checkbox input:checked + .vm-checkbox-mark {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.vm-checkbox input:checked + .vm-checkbox-mark::after {
+  content: '✓';
+  display: block;
+  color: white;
+  font-size: 12px;
+  text-align: center;
+  line-height: 14px;
+}
+
+.vm-checkbox:hover .vm-checkbox-mark {
+  border-color: var(--color-primary);
+}
+
+/* Selected VM card */
+.vm-card-selected {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
 }
