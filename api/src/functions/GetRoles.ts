@@ -72,6 +72,6 @@ export async function GetRoles(
 app.http('GetRoles', {
     methods: ['POST'],
     authLevel: 'anonymous', // Auth handled by SWA
-    route: 'GetRoles',
+    route: 'getroles',
     handler: GetRoles
 });
