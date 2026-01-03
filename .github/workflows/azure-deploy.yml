@@ -56,6 +56,8 @@ jobs:
           output_location: ''
           skip_app_build: true
           skip_api_build: false
+        env:
+          ORYX_NODE_VERSION: '20'
 
   close-pull-request:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
