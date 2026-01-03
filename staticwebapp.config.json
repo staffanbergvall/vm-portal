@@ -3,10 +3,8 @@
     "apiRuntime": "node:18"
   },
   "auth": {
-    "rolesSource": "/api/getroles",
     "identityProviders": {
       "azureActiveDirectory": {
-        "userDetailsClaim": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
         "registration": {
           "openIdIssuer": "https://login.microsoftonline.com/a0341c1a-9478-43a9-9d3d-86fa5910acc7/v2.0",
           "clientIdSettingName": "ENTRA_CLIENT_ID",
@@ -16,10 +14,6 @@
     }
   },
   "routes": [
-    {
-      "route": "/api/getroles",
-      "allowedRoles": ["anonymous", "authenticated"]
-    },
     {
       "route": "/api/*",
       "allowedRoles": ["vm-admin"]
