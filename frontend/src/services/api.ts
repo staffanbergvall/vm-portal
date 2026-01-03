@@ -47,8 +47,8 @@ export interface UserInfo {
   claims?: Array<{ typ: string; val: string }>;
 }
 
-// Use direct Function App URL since linked backend doesn't work
-const FUNCTION_APP_URL = 'https://func-vmportalprod-fg3mvon3.azurewebsites.net';
+// Use relative URLs for Managed Functions API (deployed with SWA)
+const API_BASE_URL = '/api';
 
 let cachedClientPrincipal: string | null = null;
 
@@ -104,7 +104,7 @@ export async function listVMs(): Promise<ListVMsResponse> {
     headers['x-ms-client-principal'] = clientPrincipal;
   }
 
-  const response = await fetch(`${FUNCTION_APP_URL}/api/vms`, { headers });
+  const response = await fetch(`${API_BASE_URL}/vms`, { headers });
   return handleResponse<ListVMsResponse>(response);
 }
 
@@ -118,7 +118,7 @@ export async function startVM(vmName: string): Promise<VMActionResponse> {
     headers['x-ms-client-principal'] = clientPrincipal;
   }
 
-  const response = await fetch(`${FUNCTION_APP_URL}/api/vms/${encodeURIComponent(vmName)}/start`, {
+  const response = await fetch(`${API_BASE_URL}/vms/${encodeURIComponent(vmName)}/start`, {
     method: 'POST',
     headers
   });
@@ -135,7 +135,7 @@ export async function stopVM(vmName: string): Promise<VMActionResponse> {
     headers['x-ms-client-principal'] = clientPrincipal;
   }
 
-  const response = await fetch(`${FUNCTION_APP_URL}/api/vms/${encodeURIComponent(vmName)}/stop`, {
+  const response = await fetch(`${API_BASE_URL}/vms/${encodeURIComponent(vmName)}/stop`, {
     method: 'POST',
     headers
   });
@@ -152,7 +152,7 @@ export async function restartVM(vmName: string): Promise<VMActionResponse> {
     headers['x-ms-client-principal'] = clientPrincipal;
   }
 
-  const response = await fetch(`${FUNCTION_APP_URL}/api/vms/${encodeURIComponent(vmName)}/restart`, {
+  const response = await fetch(`${API_BASE_URL}/vms/${encodeURIComponent(vmName)}/restart`, {
     method: 'POST',
     headers
   });
@@ -171,7 +171,7 @@ export async function batchStartVMs(vmNames: string[]): Promise<BatchVMResponse>
     headers['x-ms-client-principal'] = clientPrincipal;
   }
 
-  const response = await fetch(`${FUNCTION_APP_URL}/api/vms/batch/start`, {
+  const response = await fetch(`${API_BASE_URL}/vms/batch/start`, {
     method: 'POST',
     headers,
     body: JSON.stringify({ vmNames })
@@ -191,7 +191,7 @@ export async function batchStopVMs(vmNames: string[]): Promise<BatchVMResponse> 
     headers['x-ms-client-principal'] = clientPrincipal;
   }
 
-  const response = await fetch(`${FUNCTION_APP_URL}/api/vms/batch/stop`, {
+  const response = await fetch(`${API_BASE_URL}/vms/batch/stop`, {
     method: 'POST',
     headers,
     body: JSON.stringify({ vmNames })
@@ -252,7 +252,7 @@ export async function listSchedules(): Promise<ListSchedulesResponse> {
     headers['x-ms-client-principal'] = clientPrincipal;
   }
 
-  const response = await fetch(`${FUNCTION_APP_URL}/api/schedules`, { headers });
+  const response = await fetch(`${API_BASE_URL}/schedules`, { headers });
   return handleResponse<ListSchedulesResponse>(response);
 }
 
@@ -268,7 +268,7 @@ export async function updateSchedule(scheduleName: string, isEnabled: boolean): 
     headers['x-ms-client-principal'] = clientPrincipal;
   }
 
-  const response = await fetch(`${FUNCTION_APP_URL}/api/schedules/${encodeURIComponent(scheduleName)}`, {
+  const response = await fetch(`${API_BASE_URL}/schedules/${encodeURIComponent(scheduleName)}`, {
     method: 'PATCH',
     headers,
     body: JSON.stringify({ isEnabled })
@@ -288,7 +288,7 @@ export async function triggerRunbook(runbookName: string, vmNames?: string): Pro
     headers['x-ms-client-principal'] = clientPrincipal;
   }
 
-  const response = await fetch(`${FUNCTION_APP_URL}/api/runbooks/${encodeURIComponent(runbookName)}/run`, {
+  const response = await fetch(`${API_BASE_URL}/runbooks/${encodeURIComponent(runbookName)}/run`, {
     method: 'POST',
     headers,
     body: vmNames ? JSON.stringify({ vmNames }) : undefined
@@ -362,7 +362,7 @@ export async function getVMMetrics(vmName: string, timespan: string = 'PT1H'): P
     headers['x-ms-client-principal'] = clientPrincipal;
   }
 
-  const response = await fetch(`${FUNCTION_APP_URL}/api/vms/${encodeURIComponent(vmName)}/metrics?timespan=${timespan}`, { headers });
+  const response = await fetch(`${API_BASE_URL}/vms/${encodeURIComponent(vmName)}/metrics?timespan=${timespan}`, { headers });
   return handleResponse<VMMetricsResponse>(response);
 }
 
@@ -376,7 +376,7 @@ export async function getVMsSummary(): Promise<VMsSummaryResponse> {
     headers['x-ms-client-principal'] = clientPrincipal;
   }
 
-  const response = await fetch(`${FUNCTION_APP_URL}/api/vms/summary`, { headers });
+  const response = await fetch(`${API_BASE_URL}/vms/summary`, { headers });
   return handleResponse<VMsSummaryResponse>(response);
 }
 
@@ -390,6 +390,6 @@ export async function getAuditLog(hours: number = 24, limit: number = 100): Prom
     headers['x-ms-client-principal'] = clientPrincipal;
   }
 
-  const response = await fetch(`${FUNCTION_APP_URL}/api/audit-log?hours=${hours}&limit=${limit}`, { headers });
+  const response = await fetch(`${API_BASE_URL}/audit-log?hours=${hours}&limit=${limit}`, { headers });
   return handleResponse<AuditLogResponse>(response);
 }
