@@ -2,7 +2,7 @@
   "name": "vm-portal-api",
   "version": "1.0.0",
   "description": "Azure Functions API for VM Management Portal",
-  "main": "src/functions/index.js",
+  "main": "dist/src/functions/index.js",
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
