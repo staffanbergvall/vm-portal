@@ -238,3 +238,49 @@ To test with real Azure resources:
 - Set `VM_SUBSCRIPTION_ID` and `VM_RESOURCE_GROUP` in `api/local.settings.json`
 - Authenticate with `az login` to use DefaultAzureCredential locally
 - Ensure your user account has appropriate RBAC permissions on the VM resource group
+
+## Known Issues and Solutions
+
+### Issue: "crypto is not defined" API Error (Jan 2026)
+
+**Symptom:** `/api/vms` returns 500 error with message "crypto is not defined"
+
+**Root Cause:**  
+The API uses `DefaultAzureCredential` from `@azure/identity` to authenticate with Azure services. Without a configured Managed Identity, `DefaultAzureCredential` tries alternative authentication methods that fail in the Node.js Azure Functions runtime, resulting in a confusing "crypto is not defined" error message.
+
+**Solution:**
+1. Enable System-Assigned Managed Identity on the Static Web App:
+   ```bash
+   az staticwebapp identity assign \
+     --name swa-vmportalprod-fg3mvon3 \
+     --resource-group rg-vmportal
+   ```
+
+2. Grant the Managed Identity permissions to manage VMs (see MANUAL_STEPS.md for detailed steps via Azure Portal):
+   ```bash
+   # This may fail with MissingSubscription error if subscription context doesn't match
+   az role assignment create \
+     --assignee <PRINCIPAL_ID> \
+     --role "Virtual Machine Contributor" \
+     --scope "/subscriptions/<VM_SUBSCRIPTION_ID>/resourceGroups/<VM_RESOURCE_GROUP>"
+   ```
+
+**Current Status:** Managed Identity enabled (Principal ID: `13278b8f-bb98-4b33-84d4-d6de879c6909`). Role assignment requires manual completion via Azure Portal.
+
+### Stale Dist Configuration Issue (Jan 2026)
+
+**Symptom:** Deployments don't reflect changes to `staticwebapp.config.json`
+
+**Root Cause:** The `frontend/dist/staticwebapp.config.json` file wasn't being regenerated during builds.
+
+**Solution:** Always rebuild frontend after modifying `frontend/public/staticwebapp.config.json`:
+```bash
+cd frontend
+rm -rf dist
+npm run build
+git add dist
+git commit -m "rebuild: Update frontend dist with latest config"
+```
+
+**Build Process:** The build script copies `frontend/public/staticwebapp.config.json` to `frontend/dist/staticwebapp.config.json` during the build.
+
