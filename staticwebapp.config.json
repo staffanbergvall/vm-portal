@@ -1,6 +1,6 @@
 {
   "platform": {
-    "apiRuntime": "node:20"
+    "apiRuntime": "node:18"
   },
   "auth": {
     "rolesSource": "/api/getroles",
@@ -16,6 +16,10 @@
     }
   },
   "routes": [
+    {
+      "route": "/api/getroles",
+      "allowedRoles": ["anonymous", "authenticated"]
+    },
     {
       "route": "/api/*",
       "allowedRoles": ["vm-admin"]
