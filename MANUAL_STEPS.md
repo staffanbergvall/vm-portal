@@ -46,3 +46,34 @@ The API was failing with "crypto is not defined" because:
 3. DefaultAzureCredential fell back to environment/browser-based auth which failed in Node.js runtime
 
 **Fix:** Enable Managed Identity and grant it permissions to manage VMs.
+
+## Current Status (Iteration 1 - Jan 3, 2026)
+
+### What's Working ✅
+- **Authentication**: User can log in with Entra ID
+- **Authorization**: User has `vm-admin` role via Portal invitations
+- **Frontend**: All pages load and render correctly
+  - Dashboard (/)
+  - Monitoring (/monitoring)
+  - Schedules (/schedules)
+- **Navigation**: All page transitions work
+- **TypeScript**: Both frontend and API build without errors
+- **Deployment**: GitHub Actions successfully deploys to Azure
+- **Managed Identity**: Enabled on Static Web App (Principal ID: `13278b8f-bb98-4b33-84d4-d6de879c6909`)
+
+### What's Blocked ⛔
+All API endpoints fail with "crypto is not defined" error because Managed Identity lacks permissions:
+- `/api/vms` - List VMs (500 error)
+- `/api/vms/summary` - VM summary for monitoring (500 error)
+- `/api/schedules` - List automation schedules (500 error)
+- `/api/audit-log` - Audit log entries (500 error)
+
+### Next Steps
+1. **MANUAL REQUIRED**: Grant "Virtual Machine Contributor" role to Managed Identity via Azure Portal (see steps above)
+2. After role granted, test:
+   - [ ] VM list displays both VMs
+   - [ ] Start/Stop/Restart operations work
+   - [ ] Monitoring metrics load
+   - [ ] Schedules list loads
+   - [ ] Audit log displays entries
+3. Continue with automated testing via Ralph Wiggum loop
