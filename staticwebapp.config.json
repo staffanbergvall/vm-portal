@@ -14,10 +14,6 @@
   },
   "routes": [
     {
-      "route": "/api/GetRoles",
-      "allowedRoles": ["anonymous", "authenticated"]
-    },
-    {
       "route": "/api/*",
       "allowedRoles": ["vm-admin"]
     },
