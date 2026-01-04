@@ -1,5 +1,6 @@
 /**
  * ListAppServices Function - List all App Services from all subscriptions
+ * Scans all subscriptions the user has access to and groups App Services by resource group
  */
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { WebSiteManagementClient } from '@azure/arm-appservice';

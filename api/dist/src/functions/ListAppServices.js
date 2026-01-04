@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ListAppServices = ListAppServices;
 /**
  * ListAppServices Function - List all App Services from all subscriptions
+ * Scans all subscriptions the user has access to and groups App Services by resource group
  */
 const functions_1 = require("@azure/functions");
 const arm_appservice_1 = require("@azure/arm-appservice");
