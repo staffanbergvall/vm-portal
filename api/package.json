@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@azure/arm-appservice": "^15.0.0",
+    "@azure/arm-authorization": "^9.0.0",
     "@azure/arm-automation": "^10.1.1",
     "@azure/arm-compute": "^22.0.0",
     "@azure/arm-monitor": "^7.0.0",
