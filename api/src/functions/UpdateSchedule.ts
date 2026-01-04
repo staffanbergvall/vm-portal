@@ -97,31 +97,130 @@ export async function UpdateSchedule(
             };
         }
 
-        let updatedSchedule;
+        let updatedSchedule: any;
 
-        // If changing time or weekdays, we need to delete and recreate
+        // If changing time or weekdays, we need to delete and recreate via REST API
         if (body.startTime || body.weekDays) {
             // Get linked runbooks before deleting
             const jobSchedules = await client.jobSchedule.listByAutomationAccount(
                 AUTOMATION_RESOURCE_GROUP,
                 AUTOMATION_ACCOUNT_NAME
             );
-            const linkedRunbooks: string[] = [];
+            const linkedRunbooks: { name: string; runOn?: string }[] = [];
             for await (const js of jobSchedules) {
                 if (js.schedule?.name === scheduleName && js.runbook?.name) {
-                    linkedRunbooks.push(js.runbook.name);
+                    linkedRunbooks.push({
+                        name: js.runbook.name,
+                        runOn: js.runOn
+                    });
                 }
             }
 
-            // Azure Automation SDK limitation: Cannot modify schedule startTime via update()
-            // Need to use Azure REST API or redeploy via Bicep
-            return {
-                status: 501,
-                jsonBody: {
-                    error: 'Time modification not yet implemented',
-                    message: 'Azure Automation does not support changing schedule times via the SDK. Please redeploy the schedule via Bicep or use the Azure Portal.'
+            // Job schedule links will be automatically removed when schedule is deleted
+
+            // Get access token for Azure Management API
+            const token = await credential.getToken(['https://management.azure.com/.default']);
+            if (!token) {
+                throw new Error('Failed to get Azure access token');
+            }
+
+            const apiVersion = '2022-08-08';
+            const scheduleUrl = `https://management.azure.com/subscriptions/${AUTOMATION_SUBSCRIPTION_ID}/resourceGroups/${AUTOMATION_RESOURCE_GROUP}/providers/Microsoft.Automation/automationAccounts/${AUTOMATION_ACCOUNT_NAME}/schedules/${scheduleName}?api-version=${apiVersion}`;
+
+            // Delete the schedule via REST API
+            const deleteResponse = await fetch(scheduleUrl, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token.token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!deleteResponse.ok && deleteResponse.status !== 404) {
+                throw new Error(`Failed to delete schedule: ${deleteResponse.statusText}`);
+            }
+
+            // Wait a moment for delete to complete
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            // Calculate next start time based on new time and weekdays
+            const newWeekDays = body.weekDays || schedule.advancedSchedule?.weekDays || ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+            const newTime = body.startTime || '07:00';
+            const [hours, minutes] = newTime.split(':').map(Number);
+
+            // Calculate next occurrence
+            const now = new Date();
+            const nextStart = new Date(now);
+            nextStart.setHours(hours, minutes, 0, 0);
+
+            // If time has passed today, start from tomorrow
+            if (nextStart <= now) {
+                nextStart.setDate(nextStart.getDate() + 1);
+            }
+
+            // Find next matching weekday
+            const dayMap: { [key: string]: number } = {
+                'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
+                'Thursday': 4, 'Friday': 5, 'Saturday': 6
+            };
+            const targetDays = newWeekDays.map(d => dayMap[d]);
+
+            while (!targetDays.includes(nextStart.getDay())) {
+                nextStart.setDate(nextStart.getDate() + 1);
+            }
+
+            // Create new schedule via REST API
+            const createPayload = {
+                properties: {
+                    description: schedule.description || `Updated ${scheduleName}`,
+                    startTime: nextStart.toISOString(),
+                    expiryTime: schedule.expiryTime || '9999-12-31T23:59:59.999Z',
+                    interval: 1,
+                    frequency: 'Week',
+                    timeZone: schedule.timeZone || 'W. Europe Standard Time',
+                    advancedSchedule: {
+                        weekDays: newWeekDays
+                    },
+                    isEnabled: body.isEnabled !== undefined ? body.isEnabled : schedule.isEnabled
                 }
             };
+
+            const createResponse = await fetch(scheduleUrl, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token.token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(createPayload)
+            });
+
+            if (!createResponse.ok) {
+                const errorText = await createResponse.text();
+                throw new Error(`Failed to create schedule: ${errorText}`);
+            }
+
+            updatedSchedule = await createResponse.json();
+
+            // Recreate job schedule links
+            for (const runbook of linkedRunbooks) {
+                const jobScheduleId = randomUUID();
+                try {
+                    await client.jobSchedule.create(
+                        AUTOMATION_RESOURCE_GROUP,
+                        AUTOMATION_ACCOUNT_NAME,
+                        jobScheduleId,
+                        {
+                            schedule: { name: scheduleName },
+                            runbook: { name: runbook.name },
+                            runOn: runbook.runOn
+                        }
+                    );
+                } catch (error) {
+                    context.warn(`Failed to recreate job schedule for ${runbook.name}:`, error);
+                }
+            }
+
+            context.log(`Schedule ${scheduleName} recreated with new time/days`);
         } else {
             // Just update isEnabled
             updatedSchedule = await client.schedule.update(
@@ -143,9 +242,9 @@ export async function UpdateSchedule(
                 success: true,
                 message: `Schedule ${scheduleName} updated successfully`,
                 schedule: {
-                    name: updatedSchedule.name,
-                    isEnabled: updatedSchedule.isEnabled,
-                    nextRun: updatedSchedule.nextRun?.toISOString()
+                    name: updatedSchedule.name || updatedSchedule.properties?.name || scheduleName,
+                    isEnabled: updatedSchedule.isEnabled ?? updatedSchedule.properties?.isEnabled,
+                    nextRun: updatedSchedule.nextRun?.toISOString() || updatedSchedule.properties?.nextRun
                 }
             }
         };

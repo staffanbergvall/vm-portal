@@ -13,6 +13,7 @@ export default function Schedules() {
   const [message, setMessage] = useState<string | null>(null);
   const [editingSchedule, setEditingSchedule] = useState<string | null>(null);
   const [editTime, setEditTime] = useState<string>('');
+  const [editWeekDays, setEditWeekDays] = useState<string[]>([]);
 
   const fetchSchedules = useCallback(async () => {
     setLoading(true);
@@ -52,15 +53,16 @@ export default function Schedules() {
     }
   };
 
-  const handleUpdateScheduleTime = async (scheduleName: string, startTime: string) => {
+  const handleUpdateScheduleTime = async (scheduleName: string, startTime: string, weekDays: string[]) => {
     setUpdating(scheduleName);
     setMessage(null);
     try {
-      const result = await updateSchedule(scheduleName, { startTime });
+      const result = await updateSchedule(scheduleName, { startTime, weekDays });
       setMessage(result.message);
       fetchSchedules();
       setEditingSchedule(null);
       setEditTime('');
+      setEditWeekDays([]);
     } catch (err) {
       setMessage(err instanceof Error ? err.message : 'Kunde inte uppdatera schema');
     } finally {
@@ -79,16 +81,30 @@ export default function Schedules() {
     } else {
       setEditTime('07:00');
     }
+    // Set weekdays from schedule
+    setEditWeekDays(schedule.weekDays || ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']);
   };
 
   const handleCancelEdit = () => {
     setEditingSchedule(null);
     setEditTime('');
+    setEditWeekDays([]);
   };
 
   const handleSaveEdit = (scheduleName: string) => {
-    if (editTime) {
-      handleUpdateScheduleTime(scheduleName, editTime);
+    if (editTime && editWeekDays.length > 0) {
+      handleUpdateScheduleTime(scheduleName, editTime, editWeekDays);
+    }
+  };
+
+  const handleToggleWeekDay = (day: string) => {
+    if (editWeekDays.includes(day)) {
+      // Don't allow unchecking if it's the last day
+      if (editWeekDays.length > 1) {
+        setEditWeekDays(editWeekDays.filter(d => d !== day));
+      }
+    } else {
+      setEditWeekDays([...editWeekDays, day]);
     }
   };
 
@@ -241,8 +257,9 @@ export default function Schedules() {
 
                     {editingSchedule === schedule.name ? (
                       <div className="schedule-edit" style={{ marginTop: '16px', padding: '16px', border: '1px solid var(--color-gray-300)', borderRadius: '8px', backgroundColor: 'var(--color-gray-50)' }}>
-                        <h4 style={{ marginTop: 0, marginBottom: '12px', fontSize: '14px', fontWeight: 600 }}>Ändra schematid</h4>
-                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <h4 style={{ marginTop: 0, marginBottom: '12px', fontSize: '14px', fontWeight: 600 }}>Ändra schema</h4>
+
+                        <div style={{ marginBottom: '16px' }}>
                           <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span style={{ fontSize: '14px', fontWeight: 500 }}>Tid:</span>
                             <input
@@ -258,27 +275,72 @@ export default function Schedules() {
                               }}
                             />
                           </label>
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            <button
-                              className="btn btn-primary"
-                              onClick={() => handleSaveEdit(schedule.name)}
-                              disabled={updating === schedule.name || !editTime}
-                              style={{ padding: '8px 16px', fontSize: '14px' }}
-                            >
-                              {updating === schedule.name ? 'Sparar...' : 'Spara'}
-                            </button>
-                            <button
-                              className="btn btn-outline"
-                              onClick={handleCancelEdit}
-                              disabled={updating === schedule.name}
-                              style={{ padding: '8px 16px', fontSize: '14px' }}
-                            >
-                              Avbryt
-                            </button>
+                        </div>
+
+                        <div style={{ marginBottom: '16px' }}>
+                          <span style={{ fontSize: '14px', fontWeight: 500, display: 'block', marginBottom: '8px' }}>
+                            Dagar:
+                          </span>
+                          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                            {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => {
+                              const dayNames: { [key: string]: string } = {
+                                'Monday': 'Mån', 'Tuesday': 'Tis', 'Wednesday': 'Ons',
+                                'Thursday': 'Tor', 'Friday': 'Fre', 'Saturday': 'Lör', 'Sunday': 'Sön'
+                              };
+                              const isChecked = editWeekDays.includes(day);
+                              const isOnlyDay = editWeekDays.length === 1 && isChecked;
+                              return (
+                                <label
+                                  key={day}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    cursor: isOnlyDay ? 'not-allowed' : 'pointer',
+                                    opacity: isOnlyDay ? 0.6 : 1,
+                                    padding: '4px 8px',
+                                    borderRadius: '4px',
+                                    backgroundColor: isChecked ? 'var(--color-primary-100)' : 'transparent',
+                                    border: `1px solid ${isChecked ? 'var(--color-primary-400)' : 'var(--color-gray-300)'}`
+                                  }}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    onChange={() => handleToggleWeekDay(day)}
+                                    disabled={isOnlyDay || updating === schedule.name}
+                                    style={{ cursor: isOnlyDay ? 'not-allowed' : 'pointer' }}
+                                  />
+                                  <span style={{ fontSize: '13px', fontWeight: isChecked ? 600 : 400 }}>
+                                    {dayNames[day]}
+                                  </span>
+                                </label>
+                              );
+                            })}
                           </div>
                         </div>
-                        <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--color-gray-600)' }}>
-                          Obs: Nästa körning kommer att ske tidigast imorgon kl {editTime || '00:00'}
+
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button
+                            className="btn btn-primary"
+                            onClick={() => handleSaveEdit(schedule.name)}
+                            disabled={updating === schedule.name || !editTime || editWeekDays.length === 0}
+                            style={{ padding: '8px 16px', fontSize: '14px' }}
+                          >
+                            {updating === schedule.name ? 'Sparar...' : 'Spara'}
+                          </button>
+                          <button
+                            className="btn btn-outline"
+                            onClick={handleCancelEdit}
+                            disabled={updating === schedule.name}
+                            style={{ padding: '8px 16px', fontSize: '14px' }}
+                          >
+                            Avbryt
+                          </button>
+                        </div>
+
+                        <p style={{ margin: '12px 0 0', fontSize: '12px', color: 'var(--color-gray-600)' }}>
+                          Obs: Nästa körning kommer att ske tidigast {formatWeekDays(editWeekDays)} kl {editTime || '00:00'}
                         </p>
                       </div>
                     ) : (
