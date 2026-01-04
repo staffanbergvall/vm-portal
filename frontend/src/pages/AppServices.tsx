@@ -22,6 +22,7 @@ export default function AppServices() {
   const [message, setMessage] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
   const [subscriptionsScanned, setSubscriptionsScanned] = useState(0);
+  const [failedSubscriptions, setFailedSubscriptions] = useState<Array<{ id: string; error: string }>>([]);
 
   const fetchAppServices = useCallback(async () => {
     setLoading(true);
@@ -31,6 +32,7 @@ export default function AppServices() {
       setAppServicesByRG(response.appServicesByResourceGroup);
       setTotalCount(response.totalCount);
       setSubscriptionsScanned(response.subscriptionsScanned.length);
+      setFailedSubscriptions(response.failedSubscriptions || []);
 
       // Auto-expand all groups on first load
       if (expandedGroups.size === 0) {
@@ -141,6 +143,27 @@ export default function AppServices() {
       </header>
 
       <main className="container">
+        {failedSubscriptions.length > 0 && (
+          <div className="warning-message" style={{ marginBottom: '16px', padding: '16px', backgroundColor: 'var(--color-warning-bg)', border: '1px solid var(--color-warning)', borderRadius: '8px' }}>
+            <h3 style={{ margin: '0 0 8px 0', color: 'var(--color-warning)' }}>
+              ⚠️ Vissa prenumerationer misslyckades ({failedSubscriptions.length})
+            </h3>
+            <p style={{ margin: '0 0 12px 0' }}>
+              Följande prenumerationer kunde inte skannas. Detta beror troligen på saknade RBAC-behörigheter (Reader-rollen krävs):
+            </p>
+            <ul style={{ margin: 0, paddingLeft: '20px' }}>
+              {failedSubscriptions.map(failed => (
+                <li key={failed.id} style={{ marginBottom: '4px' }}>
+                  <strong>{failed.id}</strong>: {failed.error}
+                </li>
+              ))}
+            </ul>
+            <p style={{ margin: '12px 0 0 0', fontSize: '0.9em', color: 'var(--color-gray-600)' }}>
+              Kör RBAC-konfigurationsskriptet för att ge behörigheter: <code>node api/configure-appservices-rbac.js</code>
+            </p>
+          </div>
+        )}
+
         {message && (
           <div className="batch-message" style={{ marginBottom: '16px' }}>
             {message}
