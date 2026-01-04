@@ -7,13 +7,13 @@ exports.GetVMsSummary = GetVMsSummary;
 const functions_1 = require("@azure/functions");
 const arm_monitor_1 = require("@azure/arm-monitor");
 const arm_compute_1 = require("@azure/arm-compute");
-const identity_1 = require("@azure/identity");
+const azureAuth_1 = require("../utils/azureAuth");
 const TARGET_SUBSCRIPTION_ID = process.env.TARGET_SUBSCRIPTION_ID || '1cb4c6d1-f67a-40ef-afd4-f5385d03e466';
 const TARGET_RESOURCE_GROUP = process.env.TARGET_RESOURCE_GROUP || 'yourResourceGroup';
 async function GetVMsSummary(request, context) {
     context.log('Getting VMs summary metrics');
     try {
-        const credential = new identity_1.DefaultAzureCredential();
+        const credential = (0, azureAuth_1.getAzureCredential)();
         const computeClient = new arm_compute_1.ComputeManagementClient(credential, TARGET_SUBSCRIPTION_ID);
         const monitorClient = new arm_monitor_1.MonitorClient(credential, TARGET_SUBSCRIPTION_ID);
         // Get all VMs

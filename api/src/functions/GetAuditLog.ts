@@ -3,7 +3,7 @@
  */
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { LogsQueryClient, LogsQueryResultStatus } from '@azure/monitor-query';
-import { DefaultAzureCredential } from '@azure/identity';
+import { getAzureCredential, VM_SUBSCRIPTION_ID, VM_RESOURCE_GROUP, validateConfiguration } from '../utils/azureAuth';
 
 interface AuditLogEntry {
     timestamp: string;
@@ -73,7 +73,7 @@ export async function GetAuditLog(
     context.log(`Getting audit log for past ${hours} hours, limit ${limit}`);
 
     try {
-        const credential = new DefaultAzureCredential();
+        const credential = getAzureCredential();
         const client = new LogsQueryClient(credential);
 
         // Query requests table for function invocations

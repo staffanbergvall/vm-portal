@@ -6,7 +6,7 @@ exports.GetVMMetrics = GetVMMetrics;
  */
 const functions_1 = require("@azure/functions");
 const arm_monitor_1 = require("@azure/arm-monitor");
-const identity_1 = require("@azure/identity");
+const azureAuth_1 = require("../utils/azureAuth");
 const TARGET_SUBSCRIPTION_ID = process.env.TARGET_SUBSCRIPTION_ID || '1cb4c6d1-f67a-40ef-afd4-f5385d03e466';
 const TARGET_RESOURCE_GROUP = process.env.TARGET_RESOURCE_GROUP || 'yourResourceGroup';
 // Validate VM name
@@ -33,7 +33,7 @@ async function GetVMMetrics(request, context) {
     }
     context.log(`Getting metrics for VM ${vmName} with timespan ${timespan}`);
     try {
-        const credential = new identity_1.DefaultAzureCredential();
+        const credential = (0, azureAuth_1.getAzureCredential)();
         const client = new arm_monitor_1.MonitorClient(credential, TARGET_SUBSCRIPTION_ID);
         const resourceUri = `/subscriptions/${TARGET_SUBSCRIPTION_ID}/resourceGroups/${TARGET_RESOURCE_GROUP}/providers/Microsoft.Compute/virtualMachines/${vmName}`;
         // Get interval based on timespan

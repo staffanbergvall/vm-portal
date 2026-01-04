@@ -4,7 +4,7 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { MonitorClient } from '@azure/arm-monitor';
 import { ComputeManagementClient } from '@azure/arm-compute';
-import { DefaultAzureCredential } from '@azure/identity';
+import { getAzureCredential, VM_SUBSCRIPTION_ID, VM_RESOURCE_GROUP, validateConfiguration } from '../utils/azureAuth';
 
 const TARGET_SUBSCRIPTION_ID = process.env.TARGET_SUBSCRIPTION_ID || '1cb4c6d1-f67a-40ef-afd4-f5385d03e466';
 const TARGET_RESOURCE_GROUP = process.env.TARGET_RESOURCE_GROUP || 'yourResourceGroup';
@@ -32,7 +32,7 @@ export async function GetVMsSummary(
     context.log('Getting VMs summary metrics');
 
     try {
-        const credential = new DefaultAzureCredential();
+        const credential = getAzureCredential();
         const computeClient = new ComputeManagementClient(credential, TARGET_SUBSCRIPTION_ID);
         const monitorClient = new MonitorClient(credential, TARGET_SUBSCRIPTION_ID);
 

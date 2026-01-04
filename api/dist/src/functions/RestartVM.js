@@ -6,9 +6,7 @@ exports.RestartVM = RestartVM;
  */
 const functions_1 = require("@azure/functions");
 const arm_compute_1 = require("@azure/arm-compute");
-const identity_1 = require("@azure/identity");
-const VM_SUBSCRIPTION_ID = process.env.VM_SUBSCRIPTION_ID || '';
-const VM_RESOURCE_GROUP = process.env.VM_RESOURCE_GROUP || '';
+const azureAuth_1 = require("../utils/azureAuth");
 // Validate VM name to prevent injection
 function isValidVmName(name) {
     // Azure VM names: 1-64 chars, alphanumeric, hyphens, underscores
@@ -32,7 +30,7 @@ async function RestartVM(request, context) {
         };
     }
     // Validate configuration
-    if (!VM_SUBSCRIPTION_ID || !VM_RESOURCE_GROUP) {
+    if (!azureAuth_1.VM_SUBSCRIPTION_ID || !azureAuth_1.VM_RESOURCE_GROUP) {
         context.error('Missing VM_SUBSCRIPTION_ID or VM_RESOURCE_GROUP configuration');
         return {
             status: 500,
@@ -44,17 +42,17 @@ async function RestartVM(request, context) {
         context.log({
             action: 'RestartVM',
             vmName,
-            resourceGroup: VM_RESOURCE_GROUP,
+            resourceGroup: azureAuth_1.VM_RESOURCE_GROUP,
             userId,
             userEmail,
             timestamp: new Date().toISOString()
         });
         // Use Managed Identity for authentication
-        const credential = new identity_1.DefaultAzureCredential();
-        const client = new arm_compute_1.ComputeManagementClient(credential, VM_SUBSCRIPTION_ID);
-        context.log(`Restarting VM: ${vmName} in ${VM_RESOURCE_GROUP}`);
+        const credential = (0, azureAuth_1.getAzureCredential)();
+        const client = new arm_compute_1.ComputeManagementClient(credential, azureAuth_1.VM_SUBSCRIPTION_ID);
+        context.log(`Restarting VM: ${vmName} in ${azureAuth_1.VM_RESOURCE_GROUP}`);
         // Restart the VM (async operation)
-        const poller = await client.virtualMachines.beginRestart(VM_RESOURCE_GROUP, vmName);
+        const poller = await client.virtualMachines.beginRestart(azureAuth_1.VM_RESOURCE_GROUP, vmName);
         // Wait for completion
         await poller.pollUntilDone();
         context.log(`VM ${vmName} restarted successfully by ${userEmail}`);
@@ -64,7 +62,7 @@ async function RestartVM(request, context) {
                 success: true,
                 message: `VM ${vmName} restarted successfully`,
                 vmName,
-                resourceGroup: VM_RESOURCE_GROUP
+                resourceGroup: azureAuth_1.VM_RESOURCE_GROUP
             }
         };
     }

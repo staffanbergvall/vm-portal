@@ -6,7 +6,7 @@ exports.GetAuditLog = GetAuditLog;
  */
 const functions_1 = require("@azure/functions");
 const monitor_query_1 = require("@azure/monitor-query");
-const identity_1 = require("@azure/identity");
+const azureAuth_1 = require("../utils/azureAuth");
 // Helper function to process query result tables
 function processQueryResult(result) {
     const entries = [];
@@ -48,7 +48,7 @@ async function GetAuditLog(request, context) {
     }
     context.log(`Getting audit log for past ${hours} hours, limit ${limit}`);
     try {
-        const credential = new identity_1.DefaultAzureCredential();
+        const credential = (0, azureAuth_1.getAzureCredential)();
         const client = new monitor_query_1.LogsQueryClient(credential);
         // Query requests table for function invocations
         const query = `

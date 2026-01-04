@@ -3,10 +3,7 @@
  */
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { ComputeManagementClient } from '@azure/arm-compute';
-import { DefaultAzureCredential } from '@azure/identity';
-
-const VM_SUBSCRIPTION_ID = process.env.VM_SUBSCRIPTION_ID || '';
-const VM_RESOURCE_GROUP = process.env.VM_RESOURCE_GROUP || '';
+import { getAzureCredential, VM_SUBSCRIPTION_ID, VM_RESOURCE_GROUP, validateConfiguration } from '../utils/azureAuth';
 
 interface VMInfo {
     name: string;
@@ -24,16 +21,17 @@ export async function ListVMs(
 ): Promise<HttpResponseInit> {
     try {
         // Validate configuration
-        if (!VM_SUBSCRIPTION_ID || !VM_RESOURCE_GROUP) {
-            context.error('Missing VM_SUBSCRIPTION_ID or VM_RESOURCE_GROUP configuration');
+        const configCheck = validateConfiguration();
+        if (!configCheck.valid) {
+            context.error(configCheck.error);
             return {
                 status: 500,
-                jsonBody: { error: 'Server configuration error' }
+                jsonBody: { error: configCheck.error }
             };
         }
 
-        // Use Managed Identity for authentication
-        const credential = new DefaultAzureCredential();
+        // Get Azure credential (Service Principal for Static Web Apps managed functions)
+        const credential = getAzureCredential();
         const client = new ComputeManagementClient(credential, VM_SUBSCRIPTION_ID);
 
         const vms: VMInfo[] = [];

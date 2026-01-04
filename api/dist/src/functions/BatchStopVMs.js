@@ -6,9 +6,7 @@ exports.BatchStopVMs = BatchStopVMs;
  */
 const functions_1 = require("@azure/functions");
 const arm_compute_1 = require("@azure/arm-compute");
-const identity_1 = require("@azure/identity");
-const VM_SUBSCRIPTION_ID = process.env.VM_SUBSCRIPTION_ID || '';
-const VM_RESOURCE_GROUP = process.env.VM_RESOURCE_GROUP || '';
+const azureAuth_1 = require("../utils/azureAuth");
 // Validate VM name to prevent injection
 function isValidVmName(name) {
     return /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$/.test(name);
@@ -55,7 +53,7 @@ async function BatchStopVMs(request, context) {
         };
     }
     // Validate configuration
-    if (!VM_SUBSCRIPTION_ID || !VM_RESOURCE_GROUP) {
+    if (!azureAuth_1.VM_SUBSCRIPTION_ID || !azureAuth_1.VM_RESOURCE_GROUP) {
         context.error('Missing VM_SUBSCRIPTION_ID or VM_RESOURCE_GROUP configuration');
         return {
             status: 500,
@@ -67,20 +65,20 @@ async function BatchStopVMs(request, context) {
         action: 'BatchStopVMs',
         vmNames: body.vmNames,
         vmCount: body.vmNames.length,
-        resourceGroup: VM_RESOURCE_GROUP,
+        resourceGroup: azureAuth_1.VM_RESOURCE_GROUP,
         userId,
         userEmail,
         timestamp: new Date().toISOString()
     });
     try {
         // Use Managed Identity for authentication
-        const credential = new identity_1.DefaultAzureCredential();
-        const client = new arm_compute_1.ComputeManagementClient(credential, VM_SUBSCRIPTION_ID);
+        const credential = (0, azureAuth_1.getAzureCredential)();
+        const client = new arm_compute_1.ComputeManagementClient(credential, azureAuth_1.VM_SUBSCRIPTION_ID);
         context.log(`Stopping ${body.vmNames.length} VMs in parallel: ${body.vmNames.join(', ')}`);
         // Stop all VMs in parallel (deallocate to save costs)
         const results = await Promise.allSettled(body.vmNames.map(async (vmName) => {
             try {
-                const poller = await client.virtualMachines.beginDeallocate(VM_RESOURCE_GROUP, vmName);
+                const poller = await client.virtualMachines.beginDeallocate(azureAuth_1.VM_RESOURCE_GROUP, vmName);
                 await poller.pollUntilDone();
                 context.log(`VM ${vmName} stopped successfully`);
                 return {
@@ -121,7 +119,7 @@ async function BatchStopVMs(request, context) {
                 success: failureCount === 0,
                 message: `Stopped ${successCount}/${body.vmNames.length} VMs`,
                 results: vmResults,
-                resourceGroup: VM_RESOURCE_GROUP
+                resourceGroup: azureAuth_1.VM_RESOURCE_GROUP
             }
         };
     }

@@ -6,30 +6,29 @@ exports.ListVMs = ListVMs;
  */
 const functions_1 = require("@azure/functions");
 const arm_compute_1 = require("@azure/arm-compute");
-const identity_1 = require("@azure/identity");
-const VM_SUBSCRIPTION_ID = process.env.VM_SUBSCRIPTION_ID || '';
-const VM_RESOURCE_GROUP = process.env.VM_RESOURCE_GROUP || '';
+const azureAuth_1 = require("../utils/azureAuth");
 async function ListVMs(request, context) {
     try {
         // Validate configuration
-        if (!VM_SUBSCRIPTION_ID || !VM_RESOURCE_GROUP) {
-            context.error('Missing VM_SUBSCRIPTION_ID or VM_RESOURCE_GROUP configuration');
+        const configCheck = (0, azureAuth_1.validateConfiguration)();
+        if (!configCheck.valid) {
+            context.error(configCheck.error);
             return {
                 status: 500,
-                jsonBody: { error: 'Server configuration error' }
+                jsonBody: { error: configCheck.error }
             };
         }
-        // Use Managed Identity for authentication
-        const credential = new identity_1.DefaultAzureCredential();
-        const client = new arm_compute_1.ComputeManagementClient(credential, VM_SUBSCRIPTION_ID);
+        // Get Azure credential (Service Principal for Static Web Apps managed functions)
+        const credential = (0, azureAuth_1.getAzureCredential)();
+        const client = new arm_compute_1.ComputeManagementClient(credential, azureAuth_1.VM_SUBSCRIPTION_ID);
         const vms = [];
         // List all VMs in the resource group
-        for await (const vm of client.virtualMachines.list(VM_RESOURCE_GROUP)) {
+        for await (const vm of client.virtualMachines.list(azureAuth_1.VM_RESOURCE_GROUP)) {
             // Get instance view for power state
             let powerState = 'unknown';
             let provisioningState = 'unknown';
             try {
-                const instanceView = await client.virtualMachines.instanceView(VM_RESOURCE_GROUP, vm.name);
+                const instanceView = await client.virtualMachines.instanceView(azureAuth_1.VM_RESOURCE_GROUP, vm.name);
                 // Extract power state from statuses
                 const powerStatus = instanceView.statuses?.find(s => s.code?.startsWith('PowerState/'));
                 powerState = powerStatus?.code?.replace('PowerState/', '') || 'unknown';
@@ -52,14 +51,14 @@ async function ListVMs(request, context) {
         }
         // Sort VMs by name
         vms.sort((a, b) => a.name.localeCompare(b.name));
-        context.log(`Listed ${vms.length} VMs in ${VM_RESOURCE_GROUP}`);
+        context.log(`Listed ${vms.length} VMs in ${azureAuth_1.VM_RESOURCE_GROUP}`);
         return {
             status: 200,
             jsonBody: {
                 vms,
                 count: vms.length,
-                resourceGroup: VM_RESOURCE_GROUP,
-                subscriptionId: VM_SUBSCRIPTION_ID
+                resourceGroup: azureAuth_1.VM_RESOURCE_GROUP,
+                subscriptionId: azureAuth_1.VM_SUBSCRIPTION_ID
             }
         };
     }

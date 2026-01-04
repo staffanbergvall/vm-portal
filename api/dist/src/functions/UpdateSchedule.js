@@ -6,10 +6,9 @@ exports.UpdateSchedule = UpdateSchedule;
  */
 const functions_1 = require("@azure/functions");
 const arm_automation_1 = require("@azure/arm-automation");
-const identity_1 = require("@azure/identity");
+const azureAuth_1 = require("../utils/azureAuth");
 const AUTOMATION_SUBSCRIPTION_ID = process.env.AUTOMATION_SUBSCRIPTION_ID || '5280b014-4b52-47a6-b447-00678b179005';
 const AUTOMATION_RESOURCE_GROUP = process.env.AUTOMATION_RESOURCE_GROUP || 'rg-vmportal';
-const AUTOMATION_ACCOUNT_NAME = process.env.AUTOMATION_ACCOUNT_NAME || 'aa-vmportalprod-fg3mvon3';
 // Validate schedule name
 function isValidScheduleName(name) {
     return /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,127}$/.test(name);
@@ -58,10 +57,10 @@ async function UpdateSchedule(request, context) {
         timestamp: new Date().toISOString()
     });
     try {
-        const credential = new identity_1.DefaultAzureCredential();
+        const credential = (0, azureAuth_1.getAzureCredential)();
         const client = new arm_automation_1.AutomationClient(credential, AUTOMATION_SUBSCRIPTION_ID, 'status');
         // Get current schedule
-        const schedule = await client.schedule.get(AUTOMATION_RESOURCE_GROUP, AUTOMATION_ACCOUNT_NAME, scheduleName);
+        const schedule = await client.schedule.get(AUTOMATION_RESOURCE_GROUP, azureAuth_1.AUTOMATION_ACCOUNT_NAME, scheduleName);
         if (!schedule) {
             return {
                 status: 404,
@@ -69,7 +68,7 @@ async function UpdateSchedule(request, context) {
             };
         }
         // Update schedule
-        const updatedSchedule = await client.schedule.update(AUTOMATION_RESOURCE_GROUP, AUTOMATION_ACCOUNT_NAME, scheduleName, {
+        const updatedSchedule = await client.schedule.update(AUTOMATION_RESOURCE_GROUP, azureAuth_1.AUTOMATION_ACCOUNT_NAME, scheduleName, {
             isEnabled: body.isEnabled,
             description: schedule.description
         });

@@ -3,10 +3,7 @@
  */
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { ComputeManagementClient } from '@azure/arm-compute';
-import { DefaultAzureCredential } from '@azure/identity';
-
-const VM_SUBSCRIPTION_ID = process.env.VM_SUBSCRIPTION_ID || '';
-const VM_RESOURCE_GROUP = process.env.VM_RESOURCE_GROUP || '';
+import { getAzureCredential, VM_SUBSCRIPTION_ID, VM_RESOURCE_GROUP, validateConfiguration } from '../utils/azureAuth';
 
 // Validate VM name to prevent injection
 function isValidVmName(name: string): boolean {
@@ -58,7 +55,7 @@ export async function StartVM(
         });
 
         // Use Managed Identity for authentication
-        const credential = new DefaultAzureCredential();
+        const credential = getAzureCredential();
         const client = new ComputeManagementClient(credential, VM_SUBSCRIPTION_ID);
 
         context.log(`Starting VM: ${vmName} in ${VM_RESOURCE_GROUP}`);

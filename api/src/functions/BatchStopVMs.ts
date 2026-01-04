@@ -3,10 +3,8 @@
  */
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { ComputeManagementClient } from '@azure/arm-compute';
-import { DefaultAzureCredential } from '@azure/identity';
+import { getAzureCredential, VM_SUBSCRIPTION_ID, VM_RESOURCE_GROUP, validateConfiguration } from '../utils/azureAuth';
 
-const VM_SUBSCRIPTION_ID = process.env.VM_SUBSCRIPTION_ID || '';
-const VM_RESOURCE_GROUP = process.env.VM_RESOURCE_GROUP || '';
 
 interface BatchStopRequest {
     vmNames: string[];
@@ -94,7 +92,7 @@ export async function BatchStopVMs(
 
     try {
         // Use Managed Identity for authentication
-        const credential = new DefaultAzureCredential();
+        const credential = getAzureCredential();
         const client = new ComputeManagementClient(credential, VM_SUBSCRIPTION_ID);
 
         context.log(`Stopping ${body.vmNames.length} VMs in parallel: ${body.vmNames.join(', ')}`);

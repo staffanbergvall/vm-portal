@@ -3,11 +3,10 @@
  */
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { AutomationClient } from '@azure/arm-automation';
-import { DefaultAzureCredential } from '@azure/identity';
+import { getAzureCredential, VM_SUBSCRIPTION_ID, VM_RESOURCE_GROUP, AUTOMATION_ACCOUNT_NAME, validateConfiguration } from '../utils/azureAuth';
 
 const AUTOMATION_SUBSCRIPTION_ID = process.env.AUTOMATION_SUBSCRIPTION_ID || '5280b014-4b52-47a6-b447-00678b179005';
 const AUTOMATION_RESOURCE_GROUP = process.env.AUTOMATION_RESOURCE_GROUP || 'rg-vmportal';
-const AUTOMATION_ACCOUNT_NAME = process.env.AUTOMATION_ACCOUNT_NAME || 'aa-vmportalprod-fg3mvon3';
 
 interface UpdateScheduleRequest {
     isEnabled?: boolean;
@@ -70,7 +69,7 @@ export async function UpdateSchedule(
     });
 
     try {
-        const credential = new DefaultAzureCredential();
+        const credential = getAzureCredential();
         const client = new AutomationClient(credential, AUTOMATION_SUBSCRIPTION_ID, 'status');
 
         // Get current schedule
