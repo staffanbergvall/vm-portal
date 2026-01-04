@@ -5,7 +5,7 @@ import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/fu
 import { AutomationClient } from '@azure/arm-automation';
 import { getAzureCredential, VM_SUBSCRIPTION_ID, VM_RESOURCE_GROUP, AUTOMATION_ACCOUNT_NAME, validateConfiguration } from '../utils/azureAuth';
 
-const AUTOMATION_SUBSCRIPTION_ID = process.env.AUTOMATION_SUBSCRIPTION_ID || '5280b014-4b52-47a6-b447-00678b179005';
+const AUTOMATION_SUBSCRIPTION_ID = process.env.AUTOMATION_SUBSCRIPTION_ID || 'abc661c5-b0eb-4f72-9c14-cf94e5914de6';
 const AUTOMATION_RESOURCE_GROUP = process.env.AUTOMATION_RESOURCE_GROUP || 'rg-vmportal';
 
 interface ScheduleInfo {
