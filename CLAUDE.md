@@ -97,7 +97,7 @@ All functions are defined in `api/src/functions/` and use the `@azure/functions`
 - `GetVMMetrics`/`GetVMsSummary`/`GetAuditLog`: Monitoring and audit features
 
 **Azure SDK Usage**:
-- `@azure/identity`: DefaultAzureCredential for Managed Identity authentication
+- `@azure/identity`: **ClientSecretCredential** for Service Principal authentication (NOT DefaultAzureCredential - see Known Issues)
 - `@azure/arm-compute`: ComputeManagementClient for VM operations
 - `@azure/arm-automation`: AutomationManagementClient for runbook management
 - `@azure/monitor-query`: LogsQueryClient for metrics and audit logs
@@ -106,7 +106,15 @@ All functions are defined in `api/src/functions/` and use the `@azure/functions`
 - `VM_SUBSCRIPTION_ID`: Target subscription containing VMs
 - `VM_RESOURCE_GROUP`: Target resource group containing VMs
 - `AZURE_TENANT_ID`: Entra ID tenant ID
+- `ENTRA_CLIENT_ID`: Service Principal application (client) ID
+- `ENTRA_CLIENT_SECRET`: Service Principal client secret
 - `APPLICATIONINSIGHTS_CONNECTION_STRING`: App Insights connection
+
+**Shared Authentication Module** (`api/src/utils/azureAuth.ts`):
+All API functions use this shared module for authentication. It provides:
+- `getAzureCredential()`: Returns ClientSecretCredential instance
+- `validateConfiguration()`: Validates required environment variables
+- Exports `VM_SUBSCRIPTION_ID`, `VM_RESOURCE_GROUP`, `AUTOMATION_ACCOUNT_NAME` constants
 
 ### Frontend Layer (React)
 
@@ -193,12 +201,26 @@ app.http('MyFunction', {
 
 All VM operations follow this pattern:
 1. Extract VM name from route parameters
-2. Validate environment configuration (`VM_SUBSCRIPTION_ID`, `VM_RESOURCE_GROUP`)
-3. Create `ComputeManagementClient` with `DefaultAzureCredential`
-4. Perform operation using `client.virtualMachines.beginXxx()` (returns LRO poller)
-5. Wait for completion with `poller.pollUntilDone()`
-6. Log to Application Insights via `context.log()`
-7. Return standardized JSON response
+2. Validate environment configuration using `validateConfiguration()` from `azureAuth.ts`
+3. Create credential using `getAzureCredential()` (returns ClientSecretCredential)
+4. Create `ComputeManagementClient` with credential and `VM_SUBSCRIPTION_ID`
+5. Perform operation using `client.virtualMachines.beginXxx()` (returns LRO poller)
+6. Wait for completion with `poller.pollUntilDone()`
+7. Log to Application Insights via `context.log()`
+8. Return standardized JSON response
+
+**Example:**
+```typescript
+import { getAzureCredential, VM_SUBSCRIPTION_ID, VM_RESOURCE_GROUP, validateConfiguration } from '../utils/azureAuth';
+
+const configCheck = validateConfiguration();
+if (!configCheck.valid) {
+    return { status: 500, jsonBody: { error: configCheck.error } };
+}
+
+const credential = getAzureCredential();
+const client = new ComputeManagementClient(credential, VM_SUBSCRIPTION_ID);
+```
 
 ### Batch Operations
 
@@ -241,31 +263,52 @@ To test with real Azure resources:
 
 ## Known Issues and Solutions
 
-### Issue: "crypto is not defined" API Error (Jan 2026)
+### CRITICAL: Azure Static Web Apps Managed Functions Don't Support DefaultAzureCredential (Jan 2026)
 
-**Symptom:** `/api/vms` returns 500 error with message "crypto is not defined"
+**Symptom:** API returns errors like "crypto is not defined" or "ChainedTokenCredential authentication failed"
 
-**Root Cause:**  
-The API uses `DefaultAzureCredential` from `@azure/identity` to authenticate with Azure services. Without a configured Managed Identity, `DefaultAzureCredential` tries alternative authentication methods that fail in the Node.js Azure Functions runtime, resulting in a confusing "crypto is not defined" error message.
+**Root Cause:**
+Azure Static Web Apps managed functions run in a **shared multi-tenant environment** without access to the IMDS (Instance Metadata Service) endpoint. This means:
+- `DefaultAzureCredential` does NOT work (tries to use IMDS for Managed Identity)
+- Managed Identity authentication is ONLY available for:
+  - Built-in SWA authentication/authorization
+  - Key Vault secrets in application settings
+  - Database connection configuration
+- Managed Identity is NOT available for code-level Azure SDK calls
 
-**Solution:**
-1. Enable System-Assigned Managed Identity on the Static Web App:
-   ```bash
-   az staticwebapp identity assign \
-     --name swa-vmportalprod-fg3mvon3 \
-     --resource-group rg-vmportal
+**Solution: Use Service Principal (ClientSecretCredential)**
+
+1. **Create shared authentication module** (`api/src/utils/azureAuth.ts`):
+   ```typescript
+   import { ClientSecretCredential } from '@azure/identity';
+
+   export function getAzureCredential(): ClientSecretCredential {
+       return new ClientSecretCredential(
+           process.env.AZURE_TENANT_ID,
+           process.env.ENTRA_CLIENT_ID,
+           process.env.ENTRA_CLIENT_SECRET
+       );
+   }
    ```
 
-2. Grant the Managed Identity permissions to manage VMs (see MANUAL_STEPS.md for detailed steps via Azure Portal):
-   ```bash
-   # This may fail with MissingSubscription error if subscription context doesn't match
-   az role assignment create \
-     --assignee <PRINCIPAL_ID> \
-     --role "Virtual Machine Contributor" \
-     --scope "/subscriptions/<VM_SUBSCRIPTION_ID>/resourceGroups/<VM_RESOURCE_GROUP>"
+2. **Update all API functions** to use the shared module instead of DefaultAzureCredential
+
+3. **Configure application settings** with Service Principal credentials:
+   - `ENTRA_CLIENT_ID`: Service Principal application ID
+   - `ENTRA_CLIENT_SECRET`: Service Principal secret
+   - `AZURE_TENANT_ID`: Entra ID tenant ID
+
+4. **Grant RBAC permissions** to the Service Principal (NOT Managed Identity):
+   ```powershell
+   New-AzRoleAssignment -ObjectId '<SERVICE_PRINCIPAL_OBJECT_ID>' `
+     -RoleDefinitionName 'Virtual Machine Contributor' `
+     -Scope '/subscriptions/<VM_SUBSCRIPTION_ID>/resourceGroups/<VM_RESOURCE_GROUP>'
    ```
 
-**Current Status:** Managed Identity enabled (Principal ID: `13278b8f-bb98-4b33-84d4-d6de879c6909`). Role assignment requires manual completion via Azure Portal.
+**Current Implementation:**
+- Service Principal Object ID: `8cd63878-9d61-459f-ad17-1231bc054017`
+- All API functions use `ClientSecretCredential` via `azureAuth.ts`
+- Permissions granted on both subscriptions (VM management and Automation/Monitoring)
 
 ### Stale Dist Configuration Issue (Jan 2026)
 

@@ -15,7 +15,7 @@ const AZURE_CLIENT_ID = process.env.ENTRA_CLIENT_ID || '';
 const AZURE_CLIENT_SECRET = process.env.ENTRA_CLIENT_SECRET || '';
 exports.VM_SUBSCRIPTION_ID = process.env.VM_SUBSCRIPTION_ID || '';
 exports.VM_RESOURCE_GROUP = process.env.VM_RESOURCE_GROUP || '';
-exports.AUTOMATION_ACCOUNT_NAME = process.env.AUTOMATION_ACCOUNT_NAME || '';
+exports.AUTOMATION_ACCOUNT_NAME = process.env.AUTOMATION_ACCOUNT_NAME || 'aa-vmportalprod-72pgwzfl';
 /**
  * Creates an Azure credential for API calls
  * Uses Service Principal authentication since Static Web Apps managed functions

@@ -12,7 +12,7 @@ const AZURE_CLIENT_SECRET = process.env.ENTRA_CLIENT_SECRET || '';
 
 export const VM_SUBSCRIPTION_ID = process.env.VM_SUBSCRIPTION_ID || '';
 export const VM_RESOURCE_GROUP = process.env.VM_RESOURCE_GROUP || '';
-export const AUTOMATION_ACCOUNT_NAME = process.env.AUTOMATION_ACCOUNT_NAME || '';
+export const AUTOMATION_ACCOUNT_NAME = process.env.AUTOMATION_ACCOUNT_NAME || 'aa-vmportalprod-72pgwzfl';
 
 /**
  * Creates an Azure credential for API calls
