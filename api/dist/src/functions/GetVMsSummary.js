@@ -8,16 +8,19 @@ const functions_1 = require("@azure/functions");
 const arm_monitor_1 = require("@azure/arm-monitor");
 const arm_compute_1 = require("@azure/arm-compute");
 const azureAuth_1 = require("../utils/azureAuth");
-const TARGET_SUBSCRIPTION_ID = process.env.TARGET_SUBSCRIPTION_ID || '1cb4c6d1-f67a-40ef-afd4-f5385d03e466';
-const TARGET_RESOURCE_GROUP = process.env.TARGET_RESOURCE_GROUP || 'yourResourceGroup';
 async function GetVMsSummary(request, context) {
     context.log('Getting VMs summary metrics');
     try {
+        const configCheck = (0, azureAuth_1.validateConfiguration)();
+        if (!configCheck.valid) {
+            context.error(configCheck.error);
+            return { status: 500, jsonBody: { error: configCheck.error } };
+        }
         const credential = (0, azureAuth_1.getAzureCredential)();
-        const computeClient = new arm_compute_1.ComputeManagementClient(credential, TARGET_SUBSCRIPTION_ID);
-        const monitorClient = new arm_monitor_1.MonitorClient(credential, TARGET_SUBSCRIPTION_ID);
+        const computeClient = new arm_compute_1.ComputeManagementClient(credential, azureAuth_1.VM_SUBSCRIPTION_ID);
+        const monitorClient = new arm_monitor_1.MonitorClient(credential, azureAuth_1.VM_SUBSCRIPTION_ID);
         // Get all VMs
-        const vmsIterator = computeClient.virtualMachines.list(TARGET_RESOURCE_GROUP);
+        const vmsIterator = computeClient.virtualMachines.list(azureAuth_1.VM_RESOURCE_GROUP);
         const vmsList = [];
         let totalRunning = 0;
         let totalStopped = 0;
@@ -27,7 +30,7 @@ async function GetVMsSummary(request, context) {
             if (!vm.name)
                 continue;
             // Get instance view for power state
-            const instanceView = await computeClient.virtualMachines.instanceView(TARGET_RESOURCE_GROUP, vm.name);
+            const instanceView = await computeClient.virtualMachines.instanceView(azureAuth_1.VM_RESOURCE_GROUP, vm.name);
             const powerStateStatus = instanceView.statuses?.find(s => s.code?.startsWith('PowerState/'));
             const powerState = powerStateStatus?.code?.replace('PowerState/', '') || 'unknown';
             const isRunning = powerState.toLowerCase() === 'running';
@@ -43,7 +46,7 @@ async function GetVMsSummary(request, context) {
             // Only get metrics for running VMs
             if (isRunning) {
                 try {
-                    const resourceUri = `/subscriptions/${TARGET_SUBSCRIPTION_ID}/resourceGroups/${TARGET_RESOURCE_GROUP}/providers/Microsoft.Compute/virtualMachines/${vm.name}`;
+                    const resourceUri = `/subscriptions/${azureAuth_1.VM_SUBSCRIPTION_ID}/resourceGroups/${azureAuth_1.VM_RESOURCE_GROUP}/providers/Microsoft.Compute/virtualMachines/${vm.name}`;
                     const metricsResponse = await monitorClient.metrics.list(resourceUri, {
                         timespan: 'PT1H',
                         interval: 'PT5M',

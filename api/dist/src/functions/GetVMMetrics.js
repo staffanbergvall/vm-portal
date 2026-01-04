@@ -7,8 +7,6 @@ exports.GetVMMetrics = GetVMMetrics;
 const functions_1 = require("@azure/functions");
 const arm_monitor_1 = require("@azure/arm-monitor");
 const azureAuth_1 = require("../utils/azureAuth");
-const TARGET_SUBSCRIPTION_ID = process.env.TARGET_SUBSCRIPTION_ID || '1cb4c6d1-f67a-40ef-afd4-f5385d03e466';
-const TARGET_RESOURCE_GROUP = process.env.TARGET_RESOURCE_GROUP || 'yourResourceGroup';
 // Validate VM name
 function isValidVMName(name) {
     return /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$/.test(name);
@@ -33,9 +31,14 @@ async function GetVMMetrics(request, context) {
     }
     context.log(`Getting metrics for VM ${vmName} with timespan ${timespan}`);
     try {
+        const configCheck = (0, azureAuth_1.validateConfiguration)();
+        if (!configCheck.valid) {
+            context.error(configCheck.error);
+            return { status: 500, jsonBody: { error: configCheck.error } };
+        }
         const credential = (0, azureAuth_1.getAzureCredential)();
-        const client = new arm_monitor_1.MonitorClient(credential, TARGET_SUBSCRIPTION_ID);
-        const resourceUri = `/subscriptions/${TARGET_SUBSCRIPTION_ID}/resourceGroups/${TARGET_RESOURCE_GROUP}/providers/Microsoft.Compute/virtualMachines/${vmName}`;
+        const client = new arm_monitor_1.MonitorClient(credential, azureAuth_1.VM_SUBSCRIPTION_ID);
+        const resourceUri = `/subscriptions/${azureAuth_1.VM_SUBSCRIPTION_ID}/resourceGroups/${azureAuth_1.VM_RESOURCE_GROUP}/providers/Microsoft.Compute/virtualMachines/${vmName}`;
         // Get interval based on timespan
         const interval = getIntervalForTimespan(timespan);
         // Fetch metrics

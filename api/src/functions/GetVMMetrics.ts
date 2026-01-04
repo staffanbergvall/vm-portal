@@ -5,9 +5,6 @@ import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/fu
 import { MonitorClient } from '@azure/arm-monitor';
 import { getAzureCredential, VM_SUBSCRIPTION_ID, VM_RESOURCE_GROUP, validateConfiguration } from '../utils/azureAuth';
 
-const TARGET_SUBSCRIPTION_ID = process.env.TARGET_SUBSCRIPTION_ID || '1cb4c6d1-f67a-40ef-afd4-f5385d03e466';
-const TARGET_RESOURCE_GROUP = process.env.TARGET_RESOURCE_GROUP || 'yourResourceGroup';
-
 interface MetricDataPoint {
     timestamp: string;
     average: number | null;
@@ -56,10 +53,16 @@ export async function GetVMMetrics(
     context.log(`Getting metrics for VM ${vmName} with timespan ${timespan}`);
 
     try {
-        const credential = getAzureCredential();
-        const client = new MonitorClient(credential, TARGET_SUBSCRIPTION_ID);
+        const configCheck = validateConfiguration();
+        if (!configCheck.valid) {
+            context.error(configCheck.error);
+            return { status: 500, jsonBody: { error: configCheck.error } };
+        }
 
-        const resourceUri = `/subscriptions/${TARGET_SUBSCRIPTION_ID}/resourceGroups/${TARGET_RESOURCE_GROUP}/providers/Microsoft.Compute/virtualMachines/${vmName}`;
+        const credential = getAzureCredential();
+        const client = new MonitorClient(credential, VM_SUBSCRIPTION_ID);
+
+        const resourceUri = `/subscriptions/${VM_SUBSCRIPTION_ID}/resourceGroups/${VM_RESOURCE_GROUP}/providers/Microsoft.Compute/virtualMachines/${vmName}`;
 
         // Get interval based on timespan
         const interval = getIntervalForTimespan(timespan);

@@ -6,9 +6,6 @@ import { MonitorClient } from '@azure/arm-monitor';
 import { ComputeManagementClient } from '@azure/arm-compute';
 import { getAzureCredential, VM_SUBSCRIPTION_ID, VM_RESOURCE_GROUP, validateConfiguration } from '../utils/azureAuth';
 
-const TARGET_SUBSCRIPTION_ID = process.env.TARGET_SUBSCRIPTION_ID || '1cb4c6d1-f67a-40ef-afd4-f5385d03e466';
-const TARGET_RESOURCE_GROUP = process.env.TARGET_RESOURCE_GROUP || 'yourResourceGroup';
-
 interface VMSummary {
     name: string;
     powerState: string;
@@ -32,12 +29,18 @@ export async function GetVMsSummary(
     context.log('Getting VMs summary metrics');
 
     try {
+        const configCheck = validateConfiguration();
+        if (!configCheck.valid) {
+            context.error(configCheck.error);
+            return { status: 500, jsonBody: { error: configCheck.error } };
+        }
+
         const credential = getAzureCredential();
-        const computeClient = new ComputeManagementClient(credential, TARGET_SUBSCRIPTION_ID);
-        const monitorClient = new MonitorClient(credential, TARGET_SUBSCRIPTION_ID);
+        const computeClient = new ComputeManagementClient(credential, VM_SUBSCRIPTION_ID);
+        const monitorClient = new MonitorClient(credential, VM_SUBSCRIPTION_ID);
 
         // Get all VMs
-        const vmsIterator = computeClient.virtualMachines.list(TARGET_RESOURCE_GROUP);
+        const vmsIterator = computeClient.virtualMachines.list(VM_RESOURCE_GROUP);
         const vmsList: VMSummary[] = [];
         let totalRunning = 0;
         let totalStopped = 0;
@@ -49,7 +52,7 @@ export async function GetVMsSummary(
 
             // Get instance view for power state
             const instanceView = await computeClient.virtualMachines.instanceView(
-                TARGET_RESOURCE_GROUP,
+                VM_RESOURCE_GROUP,
                 vm.name
             );
 
@@ -72,7 +75,7 @@ export async function GetVMsSummary(
             // Only get metrics for running VMs
             if (isRunning) {
                 try {
-                    const resourceUri = `/subscriptions/${TARGET_SUBSCRIPTION_ID}/resourceGroups/${TARGET_RESOURCE_GROUP}/providers/Microsoft.Compute/virtualMachines/${vm.name}`;
+                    const resourceUri = `/subscriptions/${VM_SUBSCRIPTION_ID}/resourceGroups/${VM_RESOURCE_GROUP}/providers/Microsoft.Compute/virtualMachines/${vm.name}`;
 
                     const metricsResponse = await monitorClient.metrics.list(resourceUri, {
                         timespan: 'PT1H',
