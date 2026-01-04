@@ -11,6 +11,8 @@ export default function Schedules() {
   const [updating, setUpdating] = useState<string | null>(null);
   const [triggering, setTriggering] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [editingSchedule, setEditingSchedule] = useState<string | null>(null);
+  const [editTime, setEditTime] = useState<string>('');
 
   const fetchSchedules = useCallback(async () => {
     setLoading(true);
@@ -40,13 +42,53 @@ export default function Schedules() {
     setUpdating(schedule.name);
     setMessage(null);
     try {
-      const result = await updateSchedule(schedule.name, !schedule.isEnabled);
+      const result = await updateSchedule(schedule.name, { isEnabled: !schedule.isEnabled });
       setMessage(result.message);
       fetchSchedules();
     } catch (err) {
       setMessage(err instanceof Error ? err.message : 'Kunde inte uppdatera schema');
     } finally {
       setUpdating(null);
+    }
+  };
+
+  const handleUpdateScheduleTime = async (scheduleName: string, startTime: string) => {
+    setUpdating(scheduleName);
+    setMessage(null);
+    try {
+      const result = await updateSchedule(scheduleName, { startTime });
+      setMessage(result.message);
+      fetchSchedules();
+      setEditingSchedule(null);
+      setEditTime('');
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'Kunde inte uppdatera schema');
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const handleStartEdit = (schedule: ScheduleInfo) => {
+    setEditingSchedule(schedule.name);
+    // Extract time from startTime if available
+    if (schedule.startTime) {
+      const date = new Date(schedule.startTime);
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      setEditTime(`${hours}:${minutes}`);
+    } else {
+      setEditTime('07:00');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingSchedule(null);
+    setEditTime('');
+  };
+
+  const handleSaveEdit = (scheduleName: string) => {
+    if (editTime) {
+      handleUpdateScheduleTime(scheduleName, editTime);
     }
   };
 
@@ -196,6 +238,61 @@ export default function Schedules() {
                         </div>
                       )}
                     </div>
+
+                    {editingSchedule === schedule.name ? (
+                      <div className="schedule-edit" style={{ marginTop: '16px', padding: '16px', border: '1px solid var(--color-gray-300)', borderRadius: '8px', backgroundColor: 'var(--color-gray-50)' }}>
+                        <h4 style={{ marginTop: 0, marginBottom: '12px', fontSize: '14px', fontWeight: 600 }}>Ändra schematid</h4>
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '14px', fontWeight: 500 }}>Tid:</span>
+                            <input
+                              type="time"
+                              value={editTime}
+                              onChange={(e) => setEditTime(e.target.value)}
+                              style={{
+                                padding: '8px 12px',
+                                border: '1px solid var(--color-gray-300)',
+                                borderRadius: '6px',
+                                fontSize: '14px',
+                                fontFamily: 'monospace'
+                              }}
+                            />
+                          </label>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                              className="btn btn-primary"
+                              onClick={() => handleSaveEdit(schedule.name)}
+                              disabled={updating === schedule.name || !editTime}
+                              style={{ padding: '8px 16px', fontSize: '14px' }}
+                            >
+                              {updating === schedule.name ? 'Sparar...' : 'Spara'}
+                            </button>
+                            <button
+                              className="btn btn-outline"
+                              onClick={handleCancelEdit}
+                              disabled={updating === schedule.name}
+                              style={{ padding: '8px 16px', fontSize: '14px' }}
+                            >
+                              Avbryt
+                            </button>
+                          </div>
+                        </div>
+                        <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--color-gray-600)' }}>
+                          Obs: Nästa körning kommer att ske tidigast imorgon kl {editTime || '00:00'}
+                        </p>
+                      </div>
+                    ) : (
+                      <div style={{ marginTop: '12px' }}>
+                        <button
+                          className="btn btn-outline"
+                          onClick={() => handleStartEdit(schedule)}
+                          disabled={updating !== null}
+                          style={{ padding: '6px 12px', fontSize: '13px' }}
+                        >
+                          ✏️ Ändra tid
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

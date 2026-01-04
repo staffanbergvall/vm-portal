@@ -1,5 +1,5 @@
 /**
- * UpdateSchedule Function - Enable/disable a schedule
+ * UpdateSchedule Function - Enable/disable a schedule or change schedule time
  */
 import { HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 export declare function UpdateSchedule(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit>;

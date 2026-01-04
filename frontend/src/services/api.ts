@@ -257,9 +257,16 @@ export async function listSchedules(): Promise<ListSchedulesResponse> {
 }
 
 /**
- * Enable or disable a schedule
+ * Update a schedule (enable/disable, change time, or change days)
  */
-export async function updateSchedule(scheduleName: string, isEnabled: boolean): Promise<UpdateScheduleResponse> {
+export async function updateSchedule(
+  scheduleName: string,
+  options: {
+    isEnabled?: boolean;
+    startTime?: string; // HH:mm format
+    weekDays?: string[];
+  }
+): Promise<UpdateScheduleResponse> {
   const clientPrincipal = await getClientPrincipalHeader();
   const headers: HeadersInit = {
     'Content-Type': 'application/json'
@@ -271,7 +278,7 @@ export async function updateSchedule(scheduleName: string, isEnabled: boolean): 
   const response = await fetch(`${API_BASE_URL}/schedules/${encodeURIComponent(scheduleName)}`, {
     method: 'PATCH',
     headers,
-    body: JSON.stringify({ isEnabled })
+    body: JSON.stringify(options)
   });
   return handleResponse<UpdateScheduleResponse>(response);
 }
