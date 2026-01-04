@@ -11,4 +11,10 @@ import './TriggerRunbook';
 import './GetVMMetrics';
 import './GetVMsSummary';
 import './GetAuditLog';
+import './ListAppServices';
+import './StartAppService';
+import './StopAppService';
+import './RestartAppService';
+import './ScaleAppService';
+import './ConfigureAppService';
 //# sourceMappingURL=index.d.ts.map

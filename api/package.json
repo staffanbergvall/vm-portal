@@ -12,12 +12,14 @@
     "test": "jest"
   },
   "dependencies": {
-    "@azure/functions": "^4.5.0",
-    "@azure/arm-compute": "^22.0.0",
+    "@azure/arm-appservice": "^15.0.0",
     "@azure/arm-automation": "^10.1.1",
+    "@azure/arm-compute": "^22.0.0",
     "@azure/arm-monitor": "^7.0.0",
-    "@azure/monitor-query": "^1.3.0",
-    "@azure/identity": "^4.4.0"
+    "@azure/arm-subscriptions": "^5.1.1",
+    "@azure/functions": "^4.5.0",
+    "@azure/identity": "^4.4.0",
+    "@azure/monitor-query": "^1.3.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",

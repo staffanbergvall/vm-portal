@@ -2,12 +2,14 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Schedules from './pages/Schedules';
 import Monitoring from './pages/Monitoring';
+import AppServices from './pages/AppServices';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Dashboard />} />
+        <Route path="/appservices" element={<AppServices />} />
         <Route path="/schedules" element={<Schedules />} />
         <Route path="/monitoring" element={<Monitoring />} />
         <Route path="/login" element={<LoginRedirect />} />

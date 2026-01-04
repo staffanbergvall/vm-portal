@@ -14,4 +14,10 @@ require("./TriggerRunbook");
 require("./GetVMMetrics");
 require("./GetVMsSummary");
 require("./GetAuditLog");
+require("./ListAppServices");
+require("./StartAppService");
+require("./StopAppService");
+require("./RestartAppService");
+require("./ScaleAppService");
+require("./ConfigureAppService");
 //# sourceMappingURL=index.js.map

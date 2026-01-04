@@ -400,3 +400,192 @@ export async function getAuditLog(hours: number = 24, limit: number = 100): Prom
   const response = await fetch(`${API_BASE_URL}/audit-log?hours=${hours}&limit=${limit}`, { headers });
   return handleResponse<AuditLogResponse>(response);
 }
+
+// App Services types
+export interface AppServiceInfo {
+  name: string;
+  id: string;
+  subscriptionId: string;
+  subscriptionName: string;
+  resourceGroup: string;
+  location: string;
+  state: string;
+  sku: string | null;
+  kind: string | null;
+}
+
+export interface ListAppServicesResponse {
+  appServicesByResourceGroup: Record<string, AppServiceInfo[]>;
+  totalCount: number;
+  subscriptionsScanned: string[];
+  failedSubscriptions?: Array<{ id: string; error: string }>;
+}
+
+export interface AppServiceActionResponse {
+  success: boolean;
+  message: string;
+  appServiceName: string;
+}
+
+export interface ScaleAppServiceRequest {
+  subscriptionId: string;
+  resourceGroup: string;
+  sku: {
+    name: string;
+    tier: string;
+    capacity?: number;
+  };
+}
+
+export interface ConfigureAppServiceRequest {
+  subscriptionId: string;
+  resourceGroup: string;
+  appSettings: Record<string, string>;
+}
+
+/**
+ * List all App Services from all subscriptions
+ */
+export async function listAppServices(): Promise<ListAppServicesResponse> {
+  const clientPrincipal = await getClientPrincipalHeader();
+  const headers: HeadersInit = {};
+  if (clientPrincipal) {
+    headers['x-ms-client-principal'] = clientPrincipal;
+  }
+
+  const response = await fetch(`${API_BASE_URL}/appservices`, { headers });
+  return handleResponse<ListAppServicesResponse>(response);
+}
+
+/**
+ * Start an App Service
+ */
+export async function startAppService(
+  appServiceName: string,
+  subscriptionId: string,
+  resourceGroup: string
+): Promise<AppServiceActionResponse> {
+  const clientPrincipal = await getClientPrincipalHeader();
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json'
+  };
+  if (clientPrincipal) {
+    headers['x-ms-client-principal'] = clientPrincipal;
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/appservices/${encodeURIComponent(appServiceName)}/start`,
+    {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ subscriptionId, resourceGroup })
+    }
+  );
+  return handleResponse<AppServiceActionResponse>(response);
+}
+
+/**
+ * Stop an App Service
+ */
+export async function stopAppService(
+  appServiceName: string,
+  subscriptionId: string,
+  resourceGroup: string
+): Promise<AppServiceActionResponse> {
+  const clientPrincipal = await getClientPrincipalHeader();
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json'
+  };
+  if (clientPrincipal) {
+    headers['x-ms-client-principal'] = clientPrincipal;
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/appservices/${encodeURIComponent(appServiceName)}/stop`,
+    {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ subscriptionId, resourceGroup })
+    }
+  );
+  return handleResponse<AppServiceActionResponse>(response);
+}
+
+/**
+ * Restart an App Service
+ */
+export async function restartAppService(
+  appServiceName: string,
+  subscriptionId: string,
+  resourceGroup: string
+): Promise<AppServiceActionResponse> {
+  const clientPrincipal = await getClientPrincipalHeader();
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json'
+  };
+  if (clientPrincipal) {
+    headers['x-ms-client-principal'] = clientPrincipal;
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/appservices/${encodeURIComponent(appServiceName)}/restart`,
+    {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ subscriptionId, resourceGroup })
+    }
+  );
+  return handleResponse<AppServiceActionResponse>(response);
+}
+
+/**
+ * Scale an App Service (change SKU/capacity)
+ */
+export async function scaleAppService(
+  appServiceName: string,
+  request: ScaleAppServiceRequest
+): Promise<AppServiceActionResponse> {
+  const clientPrincipal = await getClientPrincipalHeader();
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json'
+  };
+  if (clientPrincipal) {
+    headers['x-ms-client-principal'] = clientPrincipal;
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/appservices/${encodeURIComponent(appServiceName)}/scale`,
+    {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify(request)
+    }
+  );
+  return handleResponse<AppServiceActionResponse>(response);
+}
+
+/**
+ * Configure App Service (update app settings)
+ */
+export async function configureAppService(
+  appServiceName: string,
+  request: ConfigureAppServiceRequest
+): Promise<AppServiceActionResponse> {
+  const clientPrincipal = await getClientPrincipalHeader();
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json'
+  };
+  if (clientPrincipal) {
+    headers['x-ms-client-principal'] = clientPrincipal;
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/appservices/${encodeURIComponent(appServiceName)}/configure`,
+    {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify(request)
+    }
+  );
+  return handleResponse<AppServiceActionResponse>(response);
+}

@@ -127,6 +127,9 @@ export default function Dashboard() {
           <span style={{ fontSize: '14px', color: 'var(--color-gray-600)' }}>
             {runningCount} igång · {stoppedCount} stoppade
           </span>
+          <Link to="/appservices" className="btn btn-outline">
+            🌐 App Services
+          </Link>
           <Link to="/monitoring" className="btn btn-outline">
             📊 Övervakning
           </Link>
