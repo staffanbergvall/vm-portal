@@ -131,7 +131,7 @@ resource weekdayStartSchedule 'Microsoft.Automation/automationAccounts/schedules
   name: 'WeekdayMorningStart'
   properties: {
     description: 'Start VMs every weekday morning'
-    startTime: '2026-01-05T${weekdayStartTime}:00+01:00'
+    startTime: '2026-01-20T${weekdayStartTime}:00+01:00'
     frequency: 'Week'
     interval: 1
     timeZone: timeZone
@@ -153,7 +153,7 @@ resource weekdayStopSchedule 'Microsoft.Automation/automationAccounts/schedules@
   name: 'WeekdayEveningStop'
   properties: {
     description: 'Stop VMs every weekday evening'
-    startTime: '2026-01-05T${weekdayStopTime}:00+01:00'
+    startTime: '2026-01-20T${weekdayStopTime}:00+01:00'
     frequency: 'Week'
     interval: 1
     timeZone: timeZone

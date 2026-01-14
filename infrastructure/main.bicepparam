@@ -11,5 +11,5 @@ param environment = 'prod'
 param customDomain = ''
 
 // Target VM resource group
-param vmSubscriptionId = 'abc661c5-b0eb-4f72-9c14-cf94e5914de6'
-param vmResourceGroup = 'rg-migrate-hyperv'
+param vmSubscriptionId = '032fc479-8402-40fe-b342-1847e09d1e78'
+param vmResourceGroup = 'rg-vms'
